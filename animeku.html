@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AnimeKu - Latest Anime Updates</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .anime-card:hover .anime-title {
+            color: #3b82f6;
+        }
+        .episode-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .player-container {
+            aspect-ratio: 16/9;
+        }
+        .loading-spinner {
+            border-top-color: #3b82f6;
+            animation: spinner 1s linear infinite;
+        }
+        @keyframes spinner {
+            to { transform: rotate(360deg); }
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        .anime-image {
+            height: 200px;
+            object-fit: cover;
+            width: 100%;
+        }
+        .anime-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .anime-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    <!-- Header -->
+    <header class="bg-indigo-900 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="flex items-center mb-4 md:mb-0">
+                    <i class="fas fa-tv text-3xl mr-3 text-indigo-300"></i>
+                    <h1 class="text-2xl font-bold">Anime<span class="text-indigo-300">Ku</span></h1>
+                </div>
+                <div class="relative w-full md:w-1/3">
+                    <input type="text" id="searchInput" placeholder="Search anime..."
+                         class="w-full px-4 py-2 rounded-full text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <button id="searchBtn" class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-indigo-600 text-white px-4 py-1 rounded-full hover:bg-indigo-700 transition">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- Latest Anime Section -->
+        <section id="latestAnime" class="mb-12">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Latest Anime Updates</h2>
+                <button id="refreshBtn" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition flex items-center">
+                    <i class="fas fa-sync-alt mr-2"></i> Refresh
+                </button>
+            </div>
+            
+            <div id="loadingLatest" class="flex justify-center items-center py-12">
+                <div class="loading-spinner h-12 w-12 border-4 rounded-full"></div>
+            </div>
+            
+            <div id="animeList" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <!-- Anime cards will be inserted here by JavaScript -->
+            </div>
+        </section>
+
+        <!-- Search Results Section (Hidden by default) -->
+        <section id="searchResults" class="mb-12 hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Search Results</h2>
+                <button id="backToLatestBtn" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition flex items-center">
+                    <i class="fas fa-arrow-left mr-2"></i> Back to Latest
+                </button>
+            </div>
+            
+            <div id="loadingSearch" class="flex justify-center items-center py-12 hidden">
+                <div class="loading-spinner h-12 w-12 border-4 rounded-full"></div>
+            </div>
+            
+            <div id="searchResultsList" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <!-- Search results will be inserted here by JavaScript -->
+            </div>
+        </section>
+
+        <!-- Anime Detail Section (Hidden by default) -->
+        <section id="animeDetail" class="hidden">
+            <button id="backFromDetailBtn" class="mb-6 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition flex items-center">
+                <i class="fas fa-arrow-left mr-2"></i> Back
+            </button>
+            
+            <div id="loadingDetail" class="flex justify-center items-center py-12">
+                <div class="loading-spinner h-12 w-12 border-4 rounded-full"></div>
+            </div>
+            
+            <div id="detailContent" class="hidden">
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                    <div class="md:flex">
+                        <div class="md:w-1/3">
+                            <img id="detailImage" src="" alt="" class="w-full h-auto object-cover">
+                            <div class="p-4">
+                                <div class="flex items-center mb-2">
+                                    <span class="bg-yellow-400 text-yellow-900 px-2 py-1 rounded text-sm font-bold mr-2">
+                                        <i class="fas fa-star mr-1"></i>
+                                        <span id="detailRating"></span>
+                                    </span>
+                                    <span id="detailAuthor" class="text-sm text-gray-600"></span>
+                                </div>
+                                <div id="detailGenres" class="flex flex-wrap gap-1 mb-4">
+                                    <!-- Genres will be inserted here -->
+                                </div>
+                            </div>
+                        </div>
+                        <div class="md:w-2/3 p-6">
+                            <h2 id="detailTitle" class="text-3xl font-bold text-gray-800 mb-4"></h2>
+                            <p id="detailDescription" class="text-gray-700 mb-6"></p>
+                            
+                            <h3 class="text-xl font-bold text-gray-800 mb-3">Episodes</h3>
+                            <div class="episode-list bg-gray-100 p-4 rounded-lg mb-6">
+                                <div id="episodeList" class="space-y-2">
+                                    <!-- Episodes will be inserted here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Player and Download Section (Hidden by default) -->
+                <div id="playerSection" class="mt-8 hidden">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">Watch Episode</h3>
+                    <div class="bg-black rounded-lg overflow-hidden shadow-lg player-container mb-6">
+                        <iframe id="videoPlayer" class="w-full h-full" frameborder="0" allowfullscreen></iframe>
+                    </div>
+                    
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">Download Options</h3>
+                    <div id="loadingDownload" class="flex justify-center items-center py-12 hidden">
+                        <div class="loading-spinner h-12 w-12 border-4 rounded-full"></div>
+                    </div>
+                    <div id="downloadOptions" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <!-- Download options will be inserted here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <h2 class="text-xl font-bold">Anime<span class="text-indigo-300">Ku</span></h2>
+                    <p class="text-gray-400">Your favorite anime streaming site</p>
+                </div>
+                <div class="flex space-x-4">
+                    <a href="https://www.instagram.com/ikykunnnn?igsh=MXBjMHYzdzJuN2xxdA==" target="_blank" class="text-gray-400 hover:text-white transition">
+                        <i class="fab fa-instagram text-2xl"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-6 pt-6 text-center text-gray-400">
+                <p>&copy; 2024 AnimeKu. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM Elements
+            const animeList = document.getElementById('animeList');
+            const searchInput = document.getElementById('searchInput');
+            const searchBtn = document.getElementById('searchBtn');
+            const searchResults = document.getElementById('searchResults');
+            const searchResultsList = document.getElementById('searchResultsList');
+            const latestAnime = document.getElementById('latestAnime');
+            const backToLatestBtn = document.getElementById('backToLatestBtn');
+            const refreshBtn = document.getElementById('refreshBtn');
+            const animeDetail = document.getElementById('animeDetail');
+            const detailContent = document.getElementById('detailContent');
+            const backFromDetailBtn = document.getElementById('backFromDetailBtn');
+            const loadingLatest = document.getElementById('loadingLatest');
+            const loadingSearch = document.getElementById('loadingSearch');
+            const loadingDetail = document.getElementById('loadingDetail');
+            const loadingDownload = document.getElementById('loadingDownload');
+
+            // API URLs
+            const LATEST_API = 'https://restapi.rizk.my.id/samehadaku/latest?apikey=free';
+            const SEARCH_API = 'https://restapi.rizk.my.id/samehadaku/search?text=';
+            const DETAIL_API = 'https://restapi.rizk.my.id/samehadaku/detail?url=';
+            const DOWNLOAD_API = 'https://restapi.rizk.my.id/samehadaku/download?url=';
+
+            // Current state
+            let currentAnimeUrl = '';
+            let currentEpisodeUrl = '';
+
+            // Load latest anime on page load
+            fetchLatestAnime();
+
+            // Event Listeners
+            searchBtn.addEventListener('click', handleSearch);
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    handleSearch();
+                }
+            });
+            backToLatestBtn.addEventListener('click', showLatestAnime);
+            refreshBtn.addEventListener('click', fetchLatestAnime);
+            backFromDetailBtn.addEventListener('click', showLatestAnime);
+
+            // Functions
+            function fetchLatestAnime() {
+                loadingLatest.classList.remove('hidden');
+                animeList.innerHTML = '';
+                
+                fetch(LATEST_API)
+                    .then(response => response.json())
+                    .then(data => {
+                        loadingLatest.classList.add('hidden');
+                        displayAnimeList(data, animeList);
+                    })
+                    .catch(error => {
+                        loadingLatest.classList.add('hidden');
+                        showError('Failed to load latest anime. Please try again later.');
+                        console.error('Error fetching latest anime:', error);
+                    });
+            }
+
+            function handleSearch() {
+                const searchTerm = searchInput.value.trim();
+                if (searchTerm === '') return;
+                
+                loadingSearch.classList.remove('hidden');
+                searchResultsList.innerHTML = '';
+                
+                fetch(`${SEARCH_API}${encodeURIComponent(searchTerm)}&apikey=free`)
+                    .then(response => response.json())
+                    .then(data => {
+                        loadingSearch.classList.add('hidden');
+                        if (data.length === 0) {
+                            searchResultsList.innerHTML = '<p class="text-gray-600 col-span-full text-center py-8">No anime found matching your search.</p>';
+                        } else {
+                            displaySearchResults(data);
+                        }
+                        showSearchResults();
+                    })
+                    .catch(error => {
+                        loadingSearch.classList.add('hidden');
+                        showError('Failed to search anime. Please try again later.');
+                        console.error('Error searching anime:', error);
+                    });
+            }
+
+            function displayAnimeList(animeData, container) {
+                animeData.forEach(anime => {
+                    const animeCard = document.createElement('div');
+                    animeCard.className = 'bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition anime-card cursor-pointer';
+                    
+                    // Fetch thumbnail image for each anime
+                    fetch(`${DETAIL_API}${encodeURIComponent(anime.link)}&apikey=free`)
+                        .then(response => response.json())
+                        .then(detailData => {
+                            animeCard.innerHTML = `
+                                <img src="${detailData.image || 'https://via.placeholder.com/300x200?text=No+Image'}" 
+                                     alt="${anime.title}" 
+                                     class="anime-image w-full">
+                                <div class="p-4">
+                                    <h3 class="anime-title font-semibold text-lg mb-2 text-gray-800 transition">${anime.title}</h3>
+                                    <div class="flex justify-between items-center text-sm text-gray-600">
+                                        <span>${anime.author}</span>
+                                        <span>${anime.date}</span>
+                                    </div>
+                                </div>
+                            `;
+                        })
+                        .catch(error => {
+                            console.error('Error fetching anime thumbnail:', error);
+                            animeCard.innerHTML = `
+                                <img src="https://via.placeholder.com/300x200?text=No+Image" 
+                                     alt="${anime.title}" 
+                                     class="anime-image w-full">
+                                <div class="p-4">
+                                    <h3 class="anime-title font-semibold text-lg mb-2 text-gray-800 transition">${anime.title}</h3>
+                                    <div class="flex justify-between items-center text-sm text-gray-600">
+                                        <span>${anime.author}</span>
+                                        <span>${anime.date}</span>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                    
+                    animeCard.addEventListener('click', () => showAnimeDetail(anime.link));
+                    container.appendChild(animeCard);
+                });
+            }
+
+            function displaySearchResults(searchData) {
+                searchData.forEach(anime => {
+                    const animeCard = document.createElement('div');
+                    animeCard.className = 'bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition anime-card cursor-pointer';
+                    
+                    // Try to fetch thumbnail for search results too
+                    fetch(`${DETAIL_API}${encodeURIComponent(anime.link)}&apikey=free`)
+                        .then(response => response.json())
+                        .then(detailData => {
+                            animeCard.innerHTML = `
+                                <img src="${detailData.image || 'https://via.placeholder.com/300x200?text=No+Image'}" 
+                                     alt="${anime.title}" 
+                                     class="anime-image w-full">
+                                <div class="p-4">
+                                    <h3 class="anime-title font-semibold text-lg mb-2 text-gray-800 transition">${anime.title}</h3>
+                                </div>
+                            `;
+                        })
+                        .catch(error => {
+                            console.error('Error fetching anime thumbnail:', error);
+                            animeCard.innerHTML = `
+                                <img src="https://via.placeholder.com/300x200?text=No+Image" 
+                                     alt="${anime.title}" 
+                                     class="anime-image w-full">
+                                <div class="p-4">
+                                    <h3 class="anime-title font-semibold text-lg mb-2 text-gray-800 transition">${anime.title}</h3>
+                                </div>
+                            `;
+                        });
+                    
+                    animeCard.addEventListener('click', () => showAnimeDetail(anime.link));
+                    searchResultsList.appendChild(animeCard);
+                });
+            }
+
+            function showAnimeDetail(animeUrl) {
+                currentAnimeUrl = animeUrl;
+                loadingDetail.classList.remove('hidden');
+                detailContent.classList.add('hidden');
+                animeDetail.classList.remove('hidden');
+                latestAnime.classList.add('hidden');
+                searchResults.classList.add('hidden');
+                
+                fetch(`${DETAIL_API}${encodeURIComponent(animeUrl)}&apikey=free`)
+                    .then(response => response.json())
+                    .then(data => {
+                        loadingDetail.classList.add('hidden');
+                        displayAnimeDetail(data);
+                        detailContent.classList.remove('hidden');
+                    })
+                    .catch(error => {
+                        loadingDetail.classList.add('hidden');
+                        showError('Failed to load anime details. Please try again later.');
+                        console.error('Error fetching anime detail:', error);
+                    });
+            }
+
+            function displayAnimeDetail(detailData) {
+                document.getElementById('detailTitle').textContent = detailData.title;
+                document.getElementById('detailImage').src = detailData.image;
+                document.getElementById('detailImage').alt = detailData.title;
+                document.getElementById('detailRating').textContent = detailData.rating;
+                document.getElementById('detailAuthor').textContent = `by ${detailData.author}`;
+                document.getElementById('detailDescription').textContent = detailData.description;
+                
+                const genresContainer = document.getElementById('detailGenres');
+                genresContainer.innerHTML = '';
+                detailData.genres.forEach(genre => {
+                    const genreBadge = document.createElement('span');
+                    genreBadge.className = 'bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded';
+                    genreBadge.textContent = genre;
+                    genresContainer.appendChild(genreBadge);
+                });
+                
+                const episodeList = document.getElementById('episodeList');
+                episodeList.innerHTML = '';
+                detailData.episodes.forEach(episode => {
+                    const episodeItem = document.createElement('div');
+                    episodeItem.className = 'bg-white p-3 rounded-lg shadow-sm hover:shadow-md transition cursor-pointer';
+                    episodeItem.innerHTML = `
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h4 class="font-medium text-gray-800">${episode.title}</h4>
+                                <p class="text-sm text-gray-500">${episode.date}</p>
+                            </div>
+                            <i class="fas fa-play text-indigo-600"></i>
+                        </div>
+                    `;
+                    episodeItem.addEventListener('click', () => showEpisodePlayer(episode.url, episode.title));
+                    episodeList.appendChild(episodeItem);
+                });
+            }
+
+            function showEpisodePlayer(episodeUrl, episodeTitle) {
+                currentEpisodeUrl = episodeUrl;
+                loadingDownload.classList.remove('hidden');
+                document.getElementById('downloadOptions').innerHTML = '';
+                document.getElementById('playerSection').classList.remove('hidden');
+
+                // Scroll to player section
+                document.getElementById('playerSection').scrollIntoView({ behavior: 'smooth' });
+
+                fetch(`${DOWNLOAD_API}${encodeURIComponent(episodeUrl)}&apikey=free`)
+                    .then(response => response.json())
+                    .then(data => {
+                        loadingDownload.classList.add('hidden');
+                        displayDownloadOptions(data.unduhan);
+                        
+                        // Try to find a direct MP4 link for the player
+                        const directLink = data.unduhan.find(option => 
+                            option.tautan.includes('.mp4') || 
+                            option.tautan.includes('blogger.com/video.g') ||
+                            option.tautan.includes('wibufile.com')
+                        );
+                        
+                        if (directLink) {
+                            let playerUrl = directLink.tautan;
+                            
+                            // Handle different types of links
+                            if (playerUrl.includes('blogger.com/video.g')) {
+                                // Blogger video embed
+                                document.getElementById('videoPlayer').src = playerUrl;
+                            } else if (playerUrl.includes('.mp4')) {
+                                // Direct MP4 link
+                                document.getElementById('videoPlayer').src = playerUrl;
+                            } else if (playerUrl.includes('wibufile.com')) {
+                                // WibuFile embed
+                                document.getElementById('videoPlayer').src = playerUrl;
+                            }
+                        } else {
+                            // Fallback to first download option
+                            document.getElementById('videoPlayer').src = data.unduhan[0].tautan;
+                        }
+                    })
+                    .catch(error => {
+                        loadingDownload.classList.add('hidden');
+                        showError('Failed to load download options. Please try again later.');
+                        console.error('Error fetching download options:', error);
+                    });
+            }
+
+            function displayDownloadOptions(downloadOptions) {
+                const container = document.getElementById('downloadOptions');
+                
+                downloadOptions.forEach(option => {
+                    const optionCard = document.createElement('div');
+                    optionCard.className = 'bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition';
+                    optionCard.innerHTML = `
+                        <h4 class="font-medium text-gray-800 mb-2">${option.nama}</h4>
+                        <a href="${option.tautan}" target="_blank"
+                            class="inline-block bg-indigo-600 text-white px-3 py-1 rounded text-sm hover:bg-indigo-700 transition">
+                            <i class="fas fa-download mr-1"></i> Download
+                        </a>
+                    `;
+                    container.appendChild(optionCard);
+                });
+            }
+
+            function showSearchResults() {
+                searchResults.classList.remove('hidden');
+                latestAnime.classList.add('hidden');
+                animeDetail.classList.add('hidden');
+            }
+
+            function showLatestAnime() {
+                searchResults.classList.add('hidden');
+                animeDetail.classList.add('hidden');
+                latestAnime.classList.remove('hidden');
+                searchInput.value = '';
+            }
+
+            function showError(message) {
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 col-span-full';
+                errorDiv.innerHTML = `
+                    <p class="font-bold">Error</p>
+                    <p>${message}</p>
+                `;
+                
+                // Insert at the beginning of the main container
+                document.querySelector('main').insertBefore(errorDiv, document.querySelector('main').firstChild);
+                
+                // Remove after 5 seconds
+                setTimeout(() => {
+                    errorDiv.remove();
+                }, 5000);
+            }
+        });
+    </script>
+</html>
